@@ -1,4 +1,4 @@
-const { db } = require("../util/admin");
+const { admin, db } = require("../util/admin");
 const config = require("../util/config");
 const firebase = require("firebase");
 const { validateSignupData, validateLoginData } = require("../util/validation");
@@ -16,6 +16,7 @@ exports.signup = (req, res) => {
 
   const { valid, errors } = validateSignupData(newUser);
   if (!valid) return res.status(400).json(errors);
+  const noImg = "no-img.png";
 
   // TODO: validate data
   let token, userId;
@@ -44,6 +45,7 @@ exports.signup = (req, res) => {
         handle: newUser.handle,
         email: newUser.email,
         createAt: new Date().toISOString(),
+        imageUrl: `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${noImg}?alt=media`,
         userId
       };
       return db.doc(`/users/${newUser.handle}`).set(userCredentials); //tạo user trong db
@@ -108,4 +110,60 @@ exports.login = (req, res) => {
         return res.status(500).json({ error: err.code });
       }
     });
+};
+
+// upload profile image
+exports.uploadImage = (req, res) => {
+  const BusBoy = require("busboy");
+  const path = require("path");
+  const os = require("os");
+  const fs = require("fs");
+
+  const busboy = new BusBoy({ headers: req.headers });
+
+  let imageFileName;
+  let imageToBeUploaded = {};
+
+  busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+    // kiểm tra kiểu file được tải lên
+    if (mimetype !== "image/jpeg" && mimetype !== "image/png") {
+      return res.status(400).json({ error: " Wrong file type submitted" });
+    }
+    //image.png
+    const imageExtenstion = filename.split(".")[filename.split(".").length - 1]; //tách đuôi ảnh
+    imageFileName = `${Math.round(
+      //đặt tên cho image user tải lên
+      Math.random() * 1000000000000
+    )}.${imageExtenstion}`;
+
+    const filepath = path.join(os.tmpdir(), imageFileName); //tạo đường dẫn cho file ảnh được tải lên
+    imageToBeUploaded = { filepath, mimetype }; //đường dẫn(path) và mimetype vào obj imageToBeUploaded
+    file.pipe(fs.createWriteStream(filepath)); //tạo file sử dụng fs libraly
+  });
+
+  busboy.on("finish", () => {
+    admin
+      .storage()
+      .bucket()
+      .upload(imageToBeUploaded.filepath, {
+        resumable: false,
+        metadata: {
+          metadata: {
+            contentType: imageToBeUploaded.mimetype
+          }
+        }
+      })
+      .then(() => {
+        const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageFileName}?alt=media`;
+        return db.doc(`/users/${req.user.handle}`).update({ imageUrl });
+      })
+      .then(() => {
+        return res.json({ message: "image uploaded successfully" });
+      })
+      .catch(err => {
+        console.error(err);
+        return res.status(500).json({ error: "something went wrong" });
+      });
+  });
+  busboy.end(req.rawBody);
 };
