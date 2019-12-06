@@ -1,4 +1,16 @@
 let db = {
+  users: [
+    {
+      userId: "asfash121j2b4912123h2jj193",
+      email: "user@gmail.com",
+      handle: "user",
+      createAt: "2019-03-15T10 ...",
+      imageUrl: "image/sdiaisdoasdn/asjdoahsdu",
+      bio: "Hello, my name is user",
+      website: "https://user.com",
+      location: "london, uk"
+    }
+  ],
   screams: [
     {
       userHandle: "user",
@@ -6,6 +18,30 @@ let db = {
       createAt: "2019-12-05T02:24:19.594Z",
       likeCount: 5,
       commentCount: 2
+    }
+  ]
+};
+
+const userDetails = {
+  //Redux data
+  credentials: {
+    userId: "UsFHMKg2VuSS5lqkUQL7X9vMz5f1",
+    email: "user@gmail.com",
+    handle: "user",
+    createAt: "2019-12-05T15:23:37.295Z",
+    imageUrl: "image/sjdaspojasodo/sihdowahu",
+    bio: "Hello, my name is user, nice to meet you",
+    website: "http://user.com",
+    location: "Hanoi, Vietnam"
+  },
+  likes: [
+    {
+      userHandle: "user",
+      screamId: "sdawe12huhiu18kuaw9aiugw7"
+    },
+    {
+      userHandle: "user",
+      screamId: "4iowe9uippohw9uugwi74BXO"
     }
   ]
 };
